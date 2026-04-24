@@ -1,6 +1,7 @@
 let chats = {};
 let activeChatId = null;
 let sidebarOpen = true;
+let isSidebarActive = false; // For mobile overlay logic
 let recognition = null;
 let isListening = false;
 
@@ -12,11 +13,15 @@ window.onload = () => {
 
 function setupVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { document.getElementById('voiceBtn').style.display = 'none'; return; }
+    if (!SpeechRecognition) { 
+        document.getElementById('voiceBtn').style.display = 'none'; 
+        return; 
+    }
     recognition = new SpeechRecognition();
     recognition.lang = 'en-IN'; // Indian English better detect karega
     recognition.continuous = true; // Poora sentence sune
     recognition.interimResults = true; // Typing jaisa dikhao while speaking
+    
     recognition.onresult = (e) => {
         // Saare results combine karo — poora sentence
         let finalText = '';
@@ -33,6 +38,7 @@ function setupVoice() {
         input.value = finalText + interimText;
         autoResize(input);
     };
+
     // Mic button dabane pe hi send hoga — auto nahi
     recognition.onend = () => {
         const input = document.getElementById('userInput');
@@ -40,6 +46,7 @@ function setupVoice() {
         stopVoice();
         if (text) sendMessage(); // Jo capture hua woh send karo
     };
+
     recognition.onerror = (e) => {
         console.log('Voice error:', e.error);
         stopVoice();
@@ -50,6 +57,7 @@ function toggleVoice() {
     if (!recognition) return;
     isListening ? stopVoice() : startVoice();
 }
+
 function startVoice() {
     isListening = true;
     recognition.start();
@@ -58,6 +66,7 @@ function startVoice() {
     btn.title = 'Listening... click to stop';
     document.getElementById('userInput').placeholder = 'Listening...';
 }
+
 function stopVoice() {
     isListening = false;
     try { recognition.stop(); } catch(e) {}
@@ -67,12 +76,25 @@ function stopVoice() {
     document.getElementById('userInput').placeholder = 'Message Namry...';
 }
 
+// Updated for both Desktop Collapse AND Mobile Overlay
 function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    // Toggle state for mobile
+    isSidebarActive = !isSidebarActive;
+    sidebar.classList.toggle('active', isSidebarActive);
+    if (overlay) overlay.classList.toggle('active', isSidebarActive);
+    
+    // Toggle state for desktop
     sidebarOpen = !sidebarOpen;
-    document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
+    sidebar.classList.toggle('collapsed', !sidebarOpen);
 }
 
-function newChat() { createNewChat(); document.getElementById('userInput').focus(); }
+function newChat() { 
+    createNewChat(); 
+    document.getElementById('userInput').focus(); 
+}
 
 function createNewChat() {
     saveCurrentMessages();
@@ -102,6 +124,7 @@ function switchChat(id) {
     document.querySelectorAll('.history-item').forEach(i => i.classList.toggle('active', i.dataset.chatId === id));
     const messagesEl = document.getElementById('messages');
     messagesEl.innerHTML = '';
+    
     if (chat.messages.length === 0) {
         document.getElementById('welcomeScreen').style.display = 'flex';
     } else {
@@ -134,7 +157,10 @@ function useChip(el) {
 }
 
 function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === 'Enter' && !e.shiftKey) { 
+        e.preventDefault(); 
+        sendMessage(); 
+    }
 }
 
 function autoResize(el) {
@@ -147,11 +173,12 @@ function elaborate() {
     sendMessage();
 }
 
-// ── IDENTITY INTERCEPT — server pe jaane se pehle pakad lo ──
+// ── IDENTITY INTERCEPT ──
 function checkIdentity(message) {
     const msg = message.toLowerCase();
     const whoQ = ['who are you','what are you','your name','introduce yourself','tum kaun','aap kaun','kaun ho','what is namry','tell me about yourself'];
-    const apiQ = ['which api','what api','which model','what model','which technology','what technology','groq','llama','openai','anthropic','powered by','built on','kaunsi api','kon si api','kaunsa model','which llm','what llm','underlying','backend'];
+    const apiQ = ['which api','what api','which model','what model','which technology','groq','llama','openai','anthropic','powered by','built on','kaunsi api','kon si api','kaunsa model','which llm','what llm','underlying','backend'];
+    
     if (whoQ.some(p => msg.includes(p))) {
         return "I'm **Namry**, your AI assistant — built to help you with questions, research, writing, and more!";
     }
@@ -178,7 +205,7 @@ async function sendMessage(customMsg) {
     sendBtn.disabled = true;
     scrollToBottom();
 
-    // Typing indicator
+    // Typing indicator with dots
     const typingId = 'typing-' + Date.now();
     messages.innerHTML += `
         <div class="msg-row bot" id="${typingId}">
@@ -187,20 +214,15 @@ async function sendMessage(customMsg) {
         </div>`;
     scrollToBottom();
 
-    // Check identity pehle — agar match ho toh server pe mat bhejo
     const identityReply = checkIdentity(message);
     if (identityReply) {
-        await new Promise(r => setTimeout(r, 600)); // thoda wait — natural lagega
+        await new Promise(r => setTimeout(r, 600)); 
         document.getElementById(typingId)?.remove();
         addBotMessage(messages, identityReply);
-        saveCurrentMessages();
-        sendBtn.disabled = false;
-        scrollToBottom();
-        input.focus();
+        finalizeMessage(sendBtn, input);
         return;
     }
 
-    // Normal question — server pe bhejo
     try {
         const response = await fetch('https://namry-chatbot-production.up.railway.app/chat', {
             method: 'POST',
@@ -216,11 +238,15 @@ async function sendMessage(customMsg) {
         }
     } catch (err) {
         document.getElementById(typingId)?.remove();
-        messages.innerHTML += `<div class="msg-row bot"><div class="bot-avatar">N</div><div class="bubble" style="color:#e07070;">Server se connection nahi.<br><code style="background:#2e2e2e;padding:2px 6px;border-radius:4px;font-size:13px;">node server.js</code> run karo.</div></div>`;
+        messages.innerHTML += `<div class="msg-row bot"><div class="bot-avatar">N</div><div class="bubble" style="color:#e07070;">Server connection failed. Run <code>node server.js</code> locally or check deployment.</div></div>`;
     }
 
+    finalizeMessage(sendBtn, input);
+}
+
+function finalizeMessage(btn, input) {
     saveCurrentMessages();
-    sendBtn.disabled = false;
+    btn.disabled = false;
     scrollToBottom();
     input.focus();
 }
@@ -254,13 +280,16 @@ function formatReply(text) {
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:#2a2a3a;padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace;color:#a8b4ff;">$1</code>');
+    
     const lines = text.split('\n');
     let result = '';
     let inList = false;
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const isBullet = /^[-•]\s+/.test(line);
         const isNumbered = /^\d+\.\s+/.test(line);
+
         if (isBullet) {
             if (!inList) { result += '<ul>'; inList = 'ul'; }
             result += `<li>${line.replace(/^[-•]\s+/, '')}</li>`;
