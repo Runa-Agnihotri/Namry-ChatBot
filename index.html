@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+        <div class="sidebar-logo">
+            <div class="logo-mark">N</div>
+            <span class="logo-text">Namry</span>
+        </div>
+        <button class="new-chat-btn" onclick="newChat()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            New chat
+        </button>
+    </div>
+
+    <div class="sidebar-label">Recents</div>
+    <div class="chat-history" id="chatHistory">
+        <div class="history-item active">New conversation</div>
+    </div>
+
+    <div class="sidebar-bottom">
+        <div class="user-profile">
+            <div class="avatar">U</div>
+            <span>You</span>
+        </div>
+    </div>
+</aside>
+
+<!-- Main content -->
+<main class="main" id="main">
+
+    <header class="topbar">
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <span class="model-name">Namry</span>
+    </header>
+
+    <div class="chat-area" id="chatArea">
+        <!-- Welcome -->
+        <div class="welcome" id="welcomeScreen">
+            <div class="welcome-icon">N</div>
+            <h1>How can I help you?</h1>
+            <p>Ask me anything — current news, prices, code, or general questions.</p>
+            <div class="chips">
+                <button class="chip" onclick="useChip(this)">What's in the news today?</button>
+                <button class="chip" onclick="useChip(this)">Current gold & oil prices</button>
+                <button class="chip" onclick="useChip(this)">Explain a concept simply</button>
+                <button class="chip" onclick="useChip(this)">Help me write something</button>
+            </div>
+        </div>
+        <!-- Messages -->
+        <div class="messages" id="messages"></div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-wrap">
+        <div class="input-box">
+            <!-- Voice button -->
+            <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input">
+                <svg id="voiceIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="2" width="6" height="12" rx="3"/>
+                    <path d="M5 10a7 7 0 0 0 14 0"/>
+                    <line x1="12" y1="19" x2="12" y2="22"/>
+                    <line x1="8" y1="22" x2="16" y2="22"/>
+                </svg>
+            </button>
+            <textarea
+                id="userInput"
+                placeholder="Message Namry..."
+                rows="1"
+                onkeydown="handleKey(event)"
+                oninput="autoResize(this)"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3l9 18-9-4.5L3 21z"/>
+                </svg>
+            </button>
+        </div>
+        <p class="disclaimer">Namry can make mistakes. Always verify important info.</p>
+    </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
