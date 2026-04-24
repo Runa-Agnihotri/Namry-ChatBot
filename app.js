@@ -202,7 +202,7 @@ async function sendMessage(customMsg) {
 
     // Normal question — server pe bhejo
     try {
-        const response = await fetch('namry-chatbot-production.up.railway.app', {
+        const response = await fetch('https://namry-chatbot-production.up.railway.app/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
