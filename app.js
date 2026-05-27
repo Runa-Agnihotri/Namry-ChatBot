@@ -91,6 +91,7 @@ function toggleSidebar() {
     sidebar.classList.toggle('collapsed', !sidebarOpen);
 }
 
+// ── NEW CONVERSATION BUTTON FIX ──
 function newChat() {
     createNewChat();
     document.getElementById('userInput').focus();
@@ -155,6 +156,7 @@ function useChip(el) {
     sendMessage();
 }
 
+// ── SUBMIT HANDLE FIX ──
 function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -223,8 +225,7 @@ async function sendMessage(customMsg) {
     }
 
     try {
-        // FIXED: Pointing directly to relative /chat endpoint for Vercel
-        app.post(['/', '/chat'], async (req, res) => {
+        const response = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
@@ -251,6 +252,7 @@ function finalizeMessage(btn, input) {
     input.focus();
 }
 
+// ── RENDER SYSTEM ──
 function addBotMessage(messages, reply) {
     const formatted = formatReply(reply);
     const showElaborate = reply.length < 600;
