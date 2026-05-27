@@ -13,15 +13,15 @@ window.onload = () => {
 
 function setupVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { 
-        document.getElementById('voiceBtn').style.display = 'none'; 
-        return; 
+    if (!SpeechRecognition) {
+        document.getElementById('voiceBtn').style.display = 'none';
+        return;
     }
     recognition = new SpeechRecognition();
     recognition.lang = 'en-IN'; // Indian English better detect karega
     recognition.continuous = true; // Poora sentence sune
     recognition.interimResults = true; // Typing jaisa dikhao while speaking
-    
+
     recognition.onresult = (e) => {
         // Saare results combine karo — poora sentence
         let finalText = '';
@@ -91,9 +91,9 @@ function toggleSidebar() {
     sidebar.classList.toggle('collapsed', !sidebarOpen);
 }
 
-function newChat() { 
-    createNewChat(); 
-    document.getElementById('userInput').focus(); 
+function newChat() {
+    createNewChat();
+    document.getElementById('userInput').focus();
 }
 
 function createNewChat() {
@@ -124,7 +124,6 @@ function switchChat(id) {
     document.querySelectorAll('.history-item').forEach(i => i.classList.toggle('active', i.dataset.chatId === id));
     const messagesEl = document.getElementById('messages');
     messagesEl.innerHTML = '';
-    
     if (chat.messages.length === 0) {
         document.getElementById('welcomeScreen').style.display = 'flex';
     } else {
@@ -157,9 +156,9 @@ function useChip(el) {
 }
 
 function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        sendMessage(); 
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
     }
 }
 
@@ -178,7 +177,7 @@ function checkIdentity(message) {
     const msg = message.toLowerCase();
     const whoQ = ['who are you','what are you','your name','introduce yourself','tum kaun','aap kaun','kaun ho','what is namry','tell me about yourself'];
     const apiQ = ['which api','what api','which model','what model','which technology','groq','llama','openai','anthropic','powered by','built on','kaunsi api','kon si api','kaunsa model','which llm','what llm','underlying','backend'];
-    
+
     if (whoQ.some(p => msg.includes(p))) {
         return "I'm **Namry**, your AI assistant — built to help you with questions, research, writing, and more!";
     }
@@ -194,11 +193,11 @@ async function sendMessage(customMsg) {
     const sendBtn = document.getElementById('sendBtn');
     const welcome = document.getElementById('welcomeScreen');
     const message = customMsg || input.value.trim();
+
     if (!message) return;
 
     welcome.style.display = 'none';
     updateHistoryTitle(message);
-
     messages.innerHTML += `<div class="msg-row user"><div class="bubble">${escapeHtml(message)}</div></div>`;
     input.value = '';
     input.style.height = 'auto';
@@ -216,7 +215,7 @@ async function sendMessage(customMsg) {
 
     const identityReply = checkIdentity(message);
     if (identityReply) {
-        await new Promise(r => setTimeout(r, 600)); 
+        await new Promise(r => setTimeout(r, 600));
         document.getElementById(typingId)?.remove();
         addBotMessage(messages, identityReply);
         finalizeMessage(sendBtn, input);
@@ -224,13 +223,15 @@ async function sendMessage(customMsg) {
     }
 
     try {
-        const response = await fetch('https://namry-chatbot-production.up.railway.app/chat', {
+        // FIXED: Pointing directly to relative /chat endpoint for Vercel
+        const response = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
         });
         const data = await response.json();
         document.getElementById(typingId)?.remove();
+
         if (data.reply) {
             addBotMessage(messages, data.reply);
         } else {
@@ -240,7 +241,6 @@ async function sendMessage(customMsg) {
         document.getElementById(typingId)?.remove();
         messages.innerHTML += `<div class="msg-row bot"><div class="bot-avatar">N</div><div class="bubble" style="color:#e07070;">Server connection failed. Run <code>node server.js</code> locally or check deployment.</div></div>`;
     }
-
     finalizeMessage(sendBtn, input);
 }
 
@@ -254,12 +254,12 @@ function finalizeMessage(btn, input) {
 function addBotMessage(messages, reply) {
     const formatted = formatReply(reply);
     const showElaborate = reply.length < 600;
-    const elaborateHtml = showElaborate
-        ? `<button class="elaborate-btn" onclick="elaborate()">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-             Elaborate
-           </button>`
-        : '';
+    const elaborateHtml = showElaborate ? `
+        <button class="elaborate-btn" onclick="elaborate()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Elaborate
+        </button>` : '';
+
     messages.innerHTML += `
         <div class="msg-row bot">
             <div class="bot-avatar">N</div>
