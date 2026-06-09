@@ -18,7 +18,7 @@ const SYSTEM_MSG = {
 };
 
 // Captures both local testing and Vercel routing paths perfectly
-app.post(['/', '/chat'], async (req, res) => {
+app.post(['/', '/chat', '/api/chat'], async (req, res) => {
   try {
     const userMessage = req.body.message;
     const completion = await groq.chat.completions.create({
@@ -37,5 +37,6 @@ app.post(['/', '/chat'], async (req, res) => {
 });
 
 app.post('/reset', (req, res) => res.json({ message: "Done!" }));
+
 
 module.exports = app;
