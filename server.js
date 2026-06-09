@@ -23,7 +23,7 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     const userMessage = req.body.message;
     const completion = await groq.chat.completions.create({
       messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-      model: "llama-3.3-70b-versatile",
+      model: "deepseek-r1-distill-llama-70b",
       temperature: 0.7,
       max_tokens: 600,
     });
