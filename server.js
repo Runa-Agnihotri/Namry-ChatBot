@@ -19,17 +19,22 @@ const SYSTEM_MSG = {
 
 // Captures both local testing and Vercel routing paths perfectly
 app.post(['/', '/chat', '/api/chat'], async (req, res) => {
-  try {
+ try {
     const userMessage = req.body.message;
     const completion = await groq.chat.completions.create({
       messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-      model: "google/gemini-2.5-flash",
+      model: "perplexity/sonar-reasoning",
       temperature: 0.7,
-      max_tokens: 600,
-      provider: {
-    web_search: true
-  }
+      max_tokens: 600
     });
+
+    const botReply = completion.choices[0].message.content;
+    res.json({ reply: botReply });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Something went wrong: " + error.message });
+  }
+});
 
     const botReply = completion.choices[0].message.content;
     res.json({ reply: botReply });
