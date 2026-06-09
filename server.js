@@ -9,7 +9,7 @@ app.use(express.json());
 
 const groq = new OpenAI({
   apiKey: process.env.API_KEY,
-  baseURL: "https://api.groq.com/openai/v1"
+  baseURL: "https://openrouter.ai/api/v1"
 });
 
 const SYSTEM_MSG = {
@@ -23,7 +23,7 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     const userMessage = req.body.message;
     const completion = await groq.chat.completions.create({
       messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-      model: "deepseek-r1-distill-llama-70b",
+      model: "google/gemini-2.5-flash",
       temperature: 0.7,
       max_tokens: 600,
     });
