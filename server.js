@@ -26,6 +26,9 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
       model: "google/gemini-2.5-flash",
       temperature: 0.7,
       max_tokens: 600,
+      provider: {
+    web_search: true
+  }
     });
 
     const botReply = completion.choices[0].message.content;
