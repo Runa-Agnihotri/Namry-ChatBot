@@ -177,16 +177,14 @@ function elaborate() {
     sendMessage();
 }
 
-// ── IDENTITY INTERCEPT (FIXED: Smart boundary matching prevents "how ru" interception)
+// ── IDENTITY INTERCEPT ──
 function checkIdentity(message) {
     const msg = message.toLowerCase().trim();
     
-    // Strict exact arrays to avoid false matches on casual chatting words
     const whoQ = ['who are you', 'what are you', 'your name', 'introduce yourself', 'tum kaun', 'aap kaun', 'kaun ho', 'what is namry', 'tell me about yourself'];
     const apiQ = ['which api', 'what api', 'what model', 'which technology', 'groq', 'llama', 'openai', 'anthropic', 'powered by', 'built on', 'kaunsi api', 'kon si api', 'kaunsa model', 'which llm', 'what llm', 'underlying', 'backend'];
     
     if (whoQ.some(p => msg === p || msg.includes(p))) {
-        // Prevent partial string hits like "how ru" triggering a identity reply block
         if (msg.includes('how') && (msg.includes('ru') || msg.includes('are you')) && !msg.includes('who')) {
             return null; 
         }
@@ -291,7 +289,10 @@ function formatReply(text) {
     // 1. Scrub out citation footprints like [12][14] entirely
     text = text.replace(/\[\d+\]/g, '');
 
-    // 2. Format Bold, Italics, and Inline Code blocks safely
+    // 2. FIX: Collapse any accidental multi-spaces inside sentences down to single spaces
+    text = text.replace(/ {2,}/g, ' ');
+
+    // 3. Format Bold, Italics, and Inline Code blocks safely
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:#2a2a3a;padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace;color:#a8b4ff;">$1</code>');
@@ -314,13 +315,13 @@ function formatReply(text) {
             }
             // Strip off all leading formatting symbols cleanly so text alignments match perfectly
             const cleanLine = line.replace(/^[-•\s]+/, '');
-            result += `<li style="margin-bottom: 6px; line-height: 1.5;">${cleanLine}</li>`;
+            result += `<li style="margin-bottom: 6px; line-height: 1.5; display: list-item; list-style-type: disc;">${cleanLine}</li>`;
         } else if (isNumbered) {
             if (!inList) {
                 result += '<ol style="margin: 4px 0; padding-left: 20px;">';
                 inList = 'ol';
             }
-            result += `<li style="margin-bottom: 6px; line-height: 1.5;">${line.replace(/^\d+\.\s+/, '')}</li>`;
+            result += `<li style="margin-bottom: 6px; line-height: 1.5; display: list-item; list-style-type: decimal;">${line.replace(/^\d+\.\s+/, '')}</li>`;
         } else {
             if (inList === 'ul') { result += '</ul>'; inList = false; }
             if (inList === 'ol') { result += '</ol>'; inList = false; }
