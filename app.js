@@ -21,7 +21,7 @@ function setupVoice() {
     recognition.lang = 'en-IN'; // Indian English better detect karega
     recognition.continuous = true; // Poora sentence sune
     recognition.interimResults = true; // Typing jaisa dikhao while speaking
-
+    
     recognition.onresult = (e) => {
         // Saare results combine karo — poora sentence
         let finalText = '';
@@ -69,7 +69,9 @@ function startVoice() {
 
 function stopVoice() {
     isListening = false;
-    try { recognition.stop(); } catch(e) {}
+    try {
+        recognition.stop();
+    } catch(e) {}
     const btn = document.getElementById('voiceBtn');
     btn.classList.remove('listening');
     btn.title = 'Voice input';
@@ -123,6 +125,7 @@ function switchChat(id) {
     activeChatId = id;
     const chat = chats[id];
     document.querySelectorAll('.history-item').forEach(i => i.classList.toggle('active', i.dataset.chatId === id));
+    
     const messagesEl = document.getElementById('messages');
     messagesEl.innerHTML = '';
     if (chat.messages.length === 0) {
@@ -179,7 +182,7 @@ function checkIdentity(message) {
     const msg = message.toLowerCase();
     const whoQ = ['who are you','what are you','your name','introduce yourself','tum kaun','aap kaun','kaun ho','what is namry','tell me about yourself'];
     const apiQ = ['which api','what api','which model','what model','which technology','groq','llama','openai','anthropic','powered by','built on','kaunsi api','kon si api','kaunsa model','which llm','what llm','underlying','backend'];
-
+    
     if (whoQ.some(p => msg.includes(p))) {
         return "I'm **Namry**, your AI assistant — built to help you with questions, research, writing, and more!";
     }
@@ -195,17 +198,18 @@ async function sendMessage(customMsg) {
     const sendBtn = document.getElementById('sendBtn');
     const welcome = document.getElementById('welcomeScreen');
     const message = customMsg || input.value.trim();
-
+    
     if (!message) return;
-
+    
     welcome.style.display = 'none';
     updateHistoryTitle(message);
     messages.innerHTML += `<div class="msg-row user"><div class="bubble">${escapeHtml(message)}</div></div>`;
+    
     input.value = '';
     input.style.height = 'auto';
     sendBtn.disabled = true;
     scrollToBottom();
-
+    
     // Typing indicator with dots
     const typingId = 'typing-' + Date.now();
     messages.innerHTML += `
@@ -214,7 +218,7 @@ async function sendMessage(customMsg) {
             <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
         </div>`;
     scrollToBottom();
-
+    
     const identityReply = checkIdentity(message);
     if (identityReply) {
         await new Promise(r => setTimeout(r, 600));
@@ -223,7 +227,7 @@ async function sendMessage(customMsg) {
         finalizeMessage(sendBtn, input);
         return;
     }
-
+    
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -232,7 +236,7 @@ async function sendMessage(customMsg) {
         });
         const data = await response.json();
         document.getElementById(typingId)?.remove();
-
+        
         if (data.reply) {
             addBotMessage(messages, data.reply);
         } else {
@@ -258,10 +262,9 @@ function addBotMessage(messages, reply) {
     const showElaborate = reply.length < 600;
     const elaborateHtml = showElaborate ? `
         <button class="elaborate-btn" onclick="elaborate()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-            Elaborate
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Elaborate
         </button>` : '';
-
+        
     messages.innerHTML += `
         <div class="msg-row bot">
             <div class="bot-avatar">N</div>
@@ -279,6 +282,10 @@ function escapeHtml(text) {
 }
 
 function formatReply(text) {
+    // 1. Scrub out citation footprints like [12][14] entirely
+    text = text.replace(/\[\d+\]/g, '');
+
+    // 2. Format Bold, Italics, and Inline Code blocks safely
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:#2a2a3a;padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace;color:#a8b4ff;">$1</code>');
@@ -286,24 +293,38 @@ function formatReply(text) {
     const lines = text.split('\n');
     let result = '';
     let inList = false;
-
+    
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const isBullet = /^[-•]\s+/.test(line);
+        const line = lines[i].trim(); // Clear trailing whitespace blocks
+        
+        // Match if line starts with a dash, a bullet point, or combination (like "- •")
+        const isBullet = /^[-•\s]+/.test(line);
         const isNumbered = /^\d+\.\s+/.test(line);
-
+        
         if (isBullet) {
-            if (!inList) { result += '<ul>'; inList = 'ul'; }
-            result += `<li>${line.replace(/^[-•]\s+/, '')}</li>`;
+            if (!inList) {
+                result += '<ul style="margin: 4px 0; padding-left: 20px;">';
+                inList = 'ul';
+            }
+            // Strip off all leading formatting symbols cleanly so text alignments match perfectly
+            const cleanLine = line.replace(/^[-•\s]+/, '');
+            result += `<li style="margin-bottom: 6px; line-height: 1.5;">${cleanLine}</li>`;
         } else if (isNumbered) {
-            if (!inList) { result += '<ol>'; inList = 'ol'; }
-            result += `<li>${line.replace(/^\d+\.\s+/, '')}</li>`;
+            if (!inList) {
+                result += '<ol style="margin: 4px 0; padding-left: 20px;">';
+                inList = 'ol';
+            }
+            result += `<li style="margin-bottom: 6px; line-height: 1.5;">${line.replace(/^\d+\.\s+/, '')}</li>`;
         } else {
             if (inList === 'ul') { result += '</ul>'; inList = false; }
             if (inList === 'ol') { result += '</ol>'; inList = false; }
-            if (line.trim() !== '') result += `<p>${line}</p>`;
+            
+            if (line !== '') {
+                result += `<p style="margin: 8px 0; line-height: 1.5;">${line}</p>`;
+            }
         }
     }
+    
     if (inList === 'ul') result += '</ul>';
     if (inList === 'ol') result += '</ol>';
     return result;
