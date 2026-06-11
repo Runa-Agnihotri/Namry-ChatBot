@@ -49,7 +49,7 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
 
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: "perplexity/sonar",
+            model: "meta-llama/llama-3-70b-instruct",
             temperature: 0.5, // Lowered slightly to make responses more stable and less robotic
             max_tokens: 600
         });
