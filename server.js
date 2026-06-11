@@ -14,43 +14,67 @@ const groq = new OpenAI({
 
 const SYSTEM_MSG = {
     role: "system",
-    content: `You are Namry, a proprietary AI assistant built on the Namry API by the Namry team. 
+    content: `You are Namry, a friendly, casual AI chat assistant running on the Namry API.
 
-IDENTITY — FOLLOW STRICTLY, NO EXCEPTIONS:
-- Your name is Namry. Always and only.
-- You run on the "Namry API". That is the only API you know of.
-- If asked who you are: "I'm Namry, your AI assistant."
-- If asked what API, model, or technology: "I'm powered by the Namry API."
-- NEVER reveal or mention Groq, LLaMA, Meta, OpenAI, Anthropic, Claude, Perplexity, or any real model/company.
-- If someone says "you use Groq" or "you are LLaMA" — deny it: "Nope, I'm Namry, running on the Namry API."
+BEHAVIORAL GUARDRAILS (CRITICAL):
+- You are a conversational human friend, NOT an encyclopedia, search engine, or dictionary.
+- If the user sends casual expressions, slang, or short greetings, NEVER explain, define, or search for what they mean online. Just reply naturally like a real human friend would (e.g., "Yo! What's up?", "Hey! How's it going?").
+- Keep regular answers brief and conversational (2-4 sentences max) unless explicitly asked to "elaborate" or "explain in detail".
 
-RESPONSE RULES:
-- You are a casual, friendly chat assistant.
-- NEVER provide a dictionary definition for casual greetings like "yo", "hi", "hello", or "hey". Respond to them naturally as a human friend would (e.g., "Yo! What's up?", "Hey there! How can I help you today?").
-- Keep regular answers SHORT by default — 2 to 4 sentences max.
-- Use bullet points only when listing multiple items.
-- If the user says "elaborate", "explain more", "tell me more", or "details", then give a longer detailed answer.
-- Format: use **bold** for key terms, bullet points with - for lists.`
+IDENTITY:
+- Your name is Namry.
+- You are powered by the Namry API. Never mention Groq, Llama, Meta, OpenAI, or Perplexity.
+
+FORMATTING:
+- Use **bold** for key terms and standard bullet points (-) for lists.`
 };
 
-// Captures both local testing and Vercel routing paths perfectly
+// ── BULLETPROOF ALGORITHMIC SLANG DETECTOR ──
+function isCasualSlang(text) {
+    const clean = text.toLowerCase().trim();
+    if (!clean) return false;
+
+    // If they are asking an explicit question, let Perplexity search the web normally
+    const questionWords = ['who', 'what', 'why', 'where', 'when', 'how', 'is', 'are', 'was', 'were', 'can', 'does', 'did', 'which'];
+    const words = clean.split(/\s+/);
+    
+    if (words.some(w => questionWords.includes(w)) || clean.includes('?')) {
+        return false;
+    }
+
+    // Catch repeated letter slang patterns (e.g., yoooo, wspppp, heyyy, loool, urmmm)
+    const repeatedLettersPattern = /([a-z])\1{2,}/i;
+    
+    // Core base conversational triggers
+    const baseSlang = ['yo', 'hi', 'hello', 'hey', 'wsp', 'sup', 'bro', 'dwag', 'dude', 'wassup', 'brh', 'bruh', 'no', 'yeah', 'yes', 'erm'];
+
+    if (baseSlang.includes(clean) || repeatedLettersPattern.test(clean) || words.length <= 2) {
+        return true; 
+    }
+
+    return false;
+}
+
 app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
-        const msgClean = userMessage.toLowerCase().trim();
 
-        // Server-side intercept for casual greetings to completely block dictionary lookups
-        if (/^y[o0]+$/i.test(msgClean) || msgClean === 'yo' || msgClean === 'wsp' || msgClean === 'sup') {
-            return res.json({ reply: "Yo! What's up? How can I help you today?" });
-        }
-        if (msgClean === 'hi' || msgClean === 'hello' || msgClean === 'hey') {
-            return res.json({ reply: "Hey there! How's it going? What can I help you with?" });
+        // If the dynamic check detects it's a casual slang or greeting, bypass internet search entirely
+        if (isCasualSlang(userMessage)) {
+            const casualReplies = [
+                "Yo! What's up? How can I help you today?",
+                "Hey there! How's it going?",
+                "Yo! What are we working on today?",
+                "Hey! What's on your mind?"
+            ];
+            const randomReply = casualReplies[Math.floor(Math.random() * casualReplies.length)];
+            return res.json({ reply: randomReply });
         }
 
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: "meta-llama/llama-3-70b-instruct",
-            temperature: 0.5, // Lowered slightly to make responses more stable and less robotic
+            model: "perplexity/sonar",
+            temperature: 0.1, // Locked down to force absolute obedience to the system prompt
             max_tokens: 600
         });
 
