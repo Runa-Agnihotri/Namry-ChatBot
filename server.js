@@ -14,78 +14,85 @@ const groq = new OpenAI({
 
 const SYSTEM_MSG = {
     role: "system",
-    content: `You are Namry, a friendly, casual AI chat assistant running on the Namry API.
+    content: `You are Namry, a casual, friendly AI assistant built on the Namry API.
 
-BEHAVIORAL GUARDRAILS (CRITICAL):
-- You are a conversational human friend, NOT an encyclopedia, search engine, or dictionary.
-- If the user sends casual expressions, slang, or short greetings, NEVER explain, define, or search for what they mean online. Just reply naturally like a real human friend would (e.g., "Yo! What's up?", "Hey! How's it going?").
-- Keep regular answers brief and conversational (2-4 sentences max) unless explicitly asked to "elaborate" or "explain in detail".
+CRITICAL PROCESSING LAWS:
+1. If the user says a casual greeting, expression, or slang (e.g., "yo", "hi", "wsp", "wsppp", "bro", "bruh", "idk", "erm"), DO NOT treat it as a web search query. Do not look up definitions or crypto coins. Respond instantly and naturally like a human friend (e.g., "Yo! What's up?", "Hey!").
+2. Only utilize your live internet search functionality if the user asks an explicit factual question about current events, people, or real-time data (e.g., "who is the US president").
 
-IDENTITY:
-- Your name is Namry.
-- You are powered by the Namry API. Never mention Groq, Llama, Meta, OpenAI, or Perplexity.
-
-FORMATTING:
-- Use **bold** for key terms and standard bullet points (-) for lists.`
+BEHAVIORAL STANDARDS:
+- Keep answers very concise and conversational (2-3 sentences max) unless explicitly asked to elaborate.
+- Never mention Perplexity, Groq, OpenRouter, or Llama. You are powered by the Namry API.
+- Use **bold** formatting for key terms.`
 };
 
-// ── BULLETPROOF ALGORITHMIC SLANG DETECTOR ──
-function isCasualSlang(text) {
-    const clean = text.toLowerCase().trim();
-    if (!clean) return false;
-
-    // If they are asking an explicit question, let Perplexity search the web normally
-    const questionWords = ['who', 'what', 'why', 'where', 'when', 'how', 'is', 'are', 'was', 'were', 'can', 'does', 'did', 'which'];
-    const words = clean.split(/\s+/);
-    
-    if (words.some(w => questionWords.includes(w)) || clean.includes('?')) {
-        return false;
-    }
-
-    // Catch repeated letter slang patterns (e.g., yoooo, wspppp, heyyy, loool, urmmm)
-    const repeatedLettersPattern = /([a-z])\1{2,}/i;
-    
-    // Core base conversational triggers
-    const baseSlang = ['yo', 'hi', 'hello', 'hey', 'wsp', 'sup', 'bro', 'dwag', 'dude', 'wassup', 'brh', 'bruh', 'no', 'yeah', 'yes', 'erm'];
-
-    if (baseSlang.includes(clean) || repeatedLettersPattern.test(clean) || words.length <= 2) {
-        return true; 
-    }
-
-    return false;
-}
-
+// ── CUSTOM SEARCH AND SCRAIPING ROUTE LOGIC RESTORED ──
 app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
+        const msgClean = userMessage.toLowerCase().trim();
 
-        // If the dynamic check detects it's a casual slang or greeting, bypass internet search entirely
-        if (isCasualSlang(userMessage)) {
-            const casualReplies = [
-                "Yo! What's up? How can I help you today?",
-                "Hey there! How's it going?",
-                "Yo! What are we working on today?",
-                "Hey! What's on your mind?"
-            ];
-            const randomReply = casualReplies[Math.floor(Math.random() * casualReplies.length)];
-            return res.json({ reply: randomReply });
+        // Safe conversational filter to instantly drop search engine noise
+        if (/^y[o0]+$/i.test(msgClean) || msgClean === 'yo' || msgClean === 'wsp' || msgClean === 'wsppp' || msgClean === 'sup') {
+            return res.json({ reply: "Yo! What's up? How can I help you today?" });
+        }
+        if (msgClean === 'hi' || msgClean === 'hello' || msgClean === 'hey' || msgClean === 'heyy') {
+            return res.json({ reply: "Hey there! How's it going? What are we working on today?" });
+        }
+        if (msgClean === 'idk' || msgClean === 'idk lol' || msgClean === 'erm idk') {
+            return res.json({ reply: "All good! Let me know if you want to search for something or need help figuring it out." });
         }
 
+        // Full Perplexity Search Streams
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
             model: "perplexity/sonar",
-            temperature: 0.1, // Locked down to force absolute obedience to the system prompt
-            max_tokens: 600
+            temperature: 0.1,
+            max_tokens: 500,
+            top_p: 0.9,
+            frequency_penalty: 0.2,
+            presence_penalty: 0.1
         });
 
+        if (!completion.choices || completion.choices.length === 0) {
+            throw new Error("No response returned from the Namry AI API cluster.");
+        }
+
         const botReply = completion.choices[0].message.content;
-        res.json({ reply: botReply });
+        
+        // Ensure response payload strictly matches your frontend structure
+        res.json({ 
+            reply: botReply,
+            status: "success",
+            timestamp: Date.now()
+        });
+
     } catch (error) {
-        console.error("Error:", error.message);
-        res.status(500).json({ error: "Something went wrong: " + error.message });
+        console.error("Server Error log tracking:", error.message);
+        res.status(500).json({ 
+            error: "Failed to fetch response", 
+            message: error.message,
+            status: "failed"
+        });
     }
 });
 
-app.post('/reset', (req, res) => res.json({ message: "Done!" }));
+// Admin Reset Routing Configuration
+app.post('/reset', (req, res) => {
+    try {
+        res.json({ 
+            message: "Done!", 
+            status: "cleared",
+            timestamp: Date.now() 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Verification check route for deployment monitoring
+app.get('/status', (req, res) => {
+    res.json({ status: "online", service: "Namry Engine Core" });
+});
 
 module.exports = app;
