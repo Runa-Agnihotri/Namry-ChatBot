@@ -177,13 +177,19 @@ function elaborate() {
     sendMessage();
 }
 
-// ── IDENTITY INTERCEPT ──
+// ── IDENTITY INTERCEPT (FIXED: Smart boundary matching prevents "how ru" interception)
 function checkIdentity(message) {
-    const msg = message.toLowerCase();
-    const whoQ = ['who are you','what are you','your name','introduce yourself','tum kaun','aap kaun','kaun ho','what is namry','tell me about yourself'];
-    const apiQ = ['which api','what api','which model','what model','which technology','groq','llama','openai','anthropic','powered by','built on','kaunsi api','kon si api','kaunsa model','which llm','what llm','underlying','backend'];
+    const msg = message.toLowerCase().trim();
     
-    if (whoQ.some(p => msg.includes(p))) {
+    // Strict exact arrays to avoid false matches on casual chatting words
+    const whoQ = ['who are you', 'what are you', 'your name', 'introduce yourself', 'tum kaun', 'aap kaun', 'kaun ho', 'what is namry', 'tell me about yourself'];
+    const apiQ = ['which api', 'what api', 'what model', 'which technology', 'groq', 'llama', 'openai', 'anthropic', 'powered by', 'built on', 'kaunsi api', 'kon si api', 'kaunsa model', 'which llm', 'what llm', 'underlying', 'backend'];
+    
+    if (whoQ.some(p => msg === p || msg.includes(p))) {
+        // Prevent partial string hits like "how ru" triggering a identity reply block
+        if (msg.includes('how') && (msg.includes('ru') || msg.includes('are you')) && !msg.includes('who')) {
+            return null; 
+        }
         return "I'm **Namry**, your AI assistant — built to help you with questions, research, writing, and more!";
     }
     if (apiQ.some(p => msg.includes(p))) {
