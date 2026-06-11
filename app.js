@@ -294,8 +294,8 @@ function formatReply(text) {
     // 2. Collapse any accidental multi-spaces inside sentences down to single spaces
     text = text.replace(/ {2,}/g, ' ');
 
-    // 3. Format Bold, Italics, and Inline Code blocks safely
-    text = text.replace(/\*\*(.*?)\*\"/g, '<strong>$1</strong>');
+    // 3. FIX: Repaired the broken bolding token replacement syntax (\*\*(.*?)\*\*)
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:#2a2a3a;padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace;color:#a8b4ff;">$1</code>');
     
