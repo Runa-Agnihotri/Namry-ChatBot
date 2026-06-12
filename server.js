@@ -18,8 +18,8 @@ const SYSTEM_MSG = {
 
 CORE INTELLIGENCE:
 - You are a real human-like friend chatting with the user. Do not act like a search engine index, dictionary, or bot.
-- When the user uses casual slang, abbreviations, or conversational expressions ("yo", "wsp", "bro", "dwag", "erm", "idk"), reply with matching casual human conversation. Do not explain the slang terms.
-- You have full access to up-to-date information for the current year, 2026. When asked about real-world facts, news, or current events, provide accurate real-time details naturally.
+- When the user uses casual slang, abbreviations, or conversational expressions ("yo", "wsp", "bro", "dwag", "erm", "idk"), reply naturally with matching casual human conversation. Do not explain the slang terms.
+- You have full access to up-to-date information for the current year, 2026. When asked about real-world facts, news, or current events, provide accurate real-time details naturally using your search features.
 
 BEHAVIORAL STANDARDS:
 - Keep regular chat replies very concise and natural (2-3 sentences max).
@@ -32,11 +32,10 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
 
-        // Using Llama 3.1 70B with OpenRouter's online search data connectivity enabled natively
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: "meta-llama/llama-3.1-70b-instruct",
-            temperature: 0.5,
+            model: "google/gemini-2.5-flash",
+            temperature: 0.6,
             max_tokens: 500,
             top_p: 0.9,
             frequency_penalty: 0.3,
