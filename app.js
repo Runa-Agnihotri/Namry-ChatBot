@@ -1,7 +1,7 @@
 let chats = {};
 let activeChatId = null;
 let sidebarOpen = true;
-let isSidebarActive = false; // For mobile overlay logic
+let isSidebarActive = false;
 let recognition = null;
 let isListening = false;
 
@@ -18,12 +18,11 @@ function setupVoice() {
         return;
     }
     recognition = new SpeechRecognition();
-    recognition.lang = 'en-IN'; // Indian English better detect karega
-    recognition.continuous = true; // Poora sentence sune
-    recognition.interimResults = true; // Typing jaisa dikhao while speaking
+    recognition.lang = 'en-IN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
     
     recognition.onresult = (e) => {
-        // Saare results combine karo — poora sentence
         let finalText = '';
         let interimText = '';
         for (let i = 0; i < e.results.length; i++) {
@@ -33,18 +32,16 @@ function setupVoice() {
                 interimText += e.results[i][0].transcript;
             }
         }
-        // Input mein dikhao — final + jo abhi bol rahe ho
         const input = document.getElementById('userInput');
         input.value = finalText + interimText;
         autoResize(input);
     };
 
-    // Mic button dabane pe hi send hoga — auto nahi
     recognition.onend = () => {
         const input = document.getElementById('userInput');
         const text = input.value.trim();
         stopVoice();
-        if (text) sendMessage(); // Jo capture hua woh send karo
+        if (text) sendMessage();
     };
 
     recognition.onerror = (e) => {
@@ -78,12 +75,7 @@ function stopVoice() {
     document.getElementById('userInput').placeholder = 'Message Namry...';
 }
 
-// Updated for both Desktop Collapse AND Mobile Overlay
 function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    
-   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const isMobile = window.innerWidth <= 768;
@@ -97,7 +89,7 @@ function toggleSidebar() {
         sidebar.classList.toggle('collapsed', !sidebarOpen);
     }
 }
-// ── NEW CONVERSATION BUTTON FIX ──
+
 function newChat() {
     createNewChat();
     document.getElementById('userInput').focus();
@@ -157,14 +149,12 @@ function updateHistoryTitle(text) {
     }
 }
 
-// ── ADD CHIP ACTION FIX ──
 function useChip(el) {
     document.getElementById('userInput').value = el.textContent;
     autoResize(document.getElementById('userInput'));
     sendMessage();
 }
 
-// ── SUBMIT HANDLE FIX ──
 function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -182,11 +172,9 @@ function elaborate() {
     sendMessage();
 }
 
-// ── IDENTITY INTERCEPT ──
 function checkIdentity(message) {
     const msg = message.toLowerCase().trim();
     
-    // Safety check: if the message is just a greeting variation like "yo", bypass identity blocks completely
     if (/^y[o0]+$/i.test(msg) || msg === 'hey' || msg === 'hi' || msg === 'hello' || msg === 'wsp') {
         return null;
     }
@@ -221,7 +209,6 @@ async function sendMessage(customMsg) {
     sendBtn.disabled = true;
     scrollToBottom();
     
-    // Typing indicator with dots
     const typingId = 'typing-' + Date.now();
     messages.innerHTML += `
         <div class="msg-row bot" id="${typingId}">
@@ -267,7 +254,6 @@ function finalizeMessage(btn, input) {
     input.focus();
 }
 
-// ── RENDER SYSTEM ──
 function addBotMessage(messages, reply) {
     const formatted = formatReply(reply);
     const showElaborate = reply.length < 600;
@@ -293,13 +279,8 @@ function escapeHtml(text) {
 }
 
 function formatReply(text) {
-    // 1. Scrub out citation footprints like [12][14] entirely
     text = text.replace(/\[\d+\]/g, '');
-
-    // 2. Collapse any accidental multi-spaces inside sentences down to single spaces
     text = text.replace(/ {2,}/g, ' ');
-
-    // 3. Format Bold, Italics, and Inline Code blocks safely
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:#2a2a3a;padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace;color:#a8b4ff;">$1</code>');
@@ -309,9 +290,7 @@ function formatReply(text) {
     let inList = false;
     
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim(); // Clear trailing whitespace blocks
-        
-        // Match if line starts with a dash, a bullet point, or combination (like "- •")
+        const line = lines[i].trim();
         const isBullet = /^[-•\s]+/.test(line);
         const isNumbered = /^\d+\.\s+/.test(line);
         
@@ -320,7 +299,6 @@ function formatReply(text) {
                 result += '<ul style="margin: 4px 0; padding-left: 20px;">';
                 inList = 'ul';
             }
-            // Strip off all leading formatting symbols cleanly so text alignments match perfectly
             const cleanLine = line.replace(/^[-•\s]+/, '');
             result += `<li style="margin-bottom: 6px; line-height: 1.5; display: list-item; list-style-type: disc;">${cleanLine}</li>`;
         } else if (isNumbered) {
@@ -332,7 +310,6 @@ function formatReply(text) {
         } else {
             if (inList === 'ul') { result += '</ul>'; inList = false; }
             if (inList === 'ol') { result += '</ol>'; inList = false; }
-            
             if (line !== '') {
                 result += `<p style="margin: 8px 0; line-height: 1.5;">${line}</p>`;
             }
