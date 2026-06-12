@@ -36,7 +36,7 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
                 { role: "assistant", content: "Hey! I'm Namry. What's up?" },
                 { role: "user", content: userMessage }
             ],
-            model: "llama-3.1-70b-versatile",
+            model: "llama-3.3-70b-versatile"
             temperature: 0.6,
             max_tokens: 500,
             top_p: 0.9,
