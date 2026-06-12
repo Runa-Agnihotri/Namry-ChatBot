@@ -16,15 +16,14 @@ const SYSTEM_MSG = {
     role: "system",
     content: `You are Namry, a casual, friendly AI assistant running on the Namry API.
 
-CRITICAL SEARCH GUIDELINES:
-- The user will speak to you using casual conversational fillers, slang, and expressions (e.g., "erm", "idk", "wsp", "yo", "bro", "dwag").
-- NEVER treat casual conversational slang or text filler as an acronym or a search query.
-- NEVER search for, define, or break down abbreviations, acronyms, medical terms, or corporate names for these casual filler words (e.g., do NOT look up or define "ERM" as an eye condition or company name). Treat them purely as friendly, human context.
-- ONLY utilize live web search data when the user asks an explicit, factual question requiring real-time information (e.g., "who is the current US president", "why are RAM prices high").
+CRITICAL OPERATIONAL RULES:
+- The user will chat with you using heavy conversational slang, shortcuts, and text fillers (like "yo", "wsp", "wsppp", "bro", "dwag", "erm", "idk").
+- NEVER treat single slang words or text fillers as search terms. Do NOT look up definitions, do NOT break down acronyms, and do NOT explain what the words mean. Just respond casually like a human friend in a chat room.
+- You have real-time live internet data access. Only use it when the user asks an explicit factual question about current real-world events, people, dates, or live stats (e.g., "who is the current US president").
 
 BEHAVIORAL STANDARDS:
-- Keep regular conversational replies very concise, natural, and friendly (2-3 sentences max).
-- Never mention Perplexity, Groq, OpenRouter, or Llama. You are powered by the Namry API.
+- Keep regular conversational replies very concise and natural (2-3 sentences max).
+- Never mention Perplexity, Groq, OpenRouter, Google, or Llama. You are powered by the Namry API.
 - Use **bold** formatting only for key terms.`
 };
 
@@ -33,15 +32,13 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
 
-        // Pass messages directly to the search model with strict operational context
+        // Using a highly advanced model that perfectly separates conversational structure from web lookup requests
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: "perplexity/sonar",
-            temperature: 0.1, // Set low to guarantee strict obedience to the system prompt
+            model: "google/gemini-2.5-flash", 
+            temperature: 0.3,
             max_tokens: 500,
-            top_p: 0.9,
-            frequency_penalty: 0.2,
-            presence_penalty: 0.1
+            top_p: 0.9
         });
 
         if (!completion.choices || completion.choices.length === 0) {
@@ -50,7 +47,6 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
 
         const botReply = completion.choices[0].message.content;
         
-        // Ensure response payload strictly matches your frontend structure
         res.json({ 
             reply: botReply,
             status: "success",
