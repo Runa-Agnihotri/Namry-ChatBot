@@ -34,7 +34,7 @@ app.post(['/', '/chat', '/api/chat'], async (req, res) => {
 
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: "google/gemini-2.5-flash",
+            model: "meta-llama/llama-3.1-70b-instruct",
             temperature: 0.6,
             max_tokens: 500,
             top_p: 0.9,
