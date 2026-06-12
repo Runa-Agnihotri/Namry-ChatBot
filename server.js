@@ -14,40 +14,30 @@ const groq = new OpenAI({
 
 const SYSTEM_MSG = {
     role: "system",
-    content: `You are Namry, a casual, friendly AI assistant built on the Namry API.
+    content: `You are Namry, a casual, friendly AI assistant running on the Namry API.
 
-CRITICAL PROCESSING LAWS:
-1. If the user says a casual greeting, expression, or slang (e.g., "yo", "hi", "wsp", "wsppp", "bro", "bruh", "idk", "erm"), DO NOT treat it as a web search query. Do not look up definitions or crypto coins. Respond instantly and naturally like a human friend (e.g., "Yo! What's up?", "Hey!").
-2. Only utilize your live internet search functionality if the user asks an explicit factual question about current events, people, or real-time data (e.g., "who is the US president").
+CRITICAL SEARCH GUIDELINES:
+- The user will speak to you using casual conversational fillers, slang, and expressions (e.g., "erm", "idk", "wsp", "yo", "bro", "dwag").
+- NEVER treat casual conversational slang or text filler as an acronym or a search query.
+- NEVER search for, define, or break down abbreviations, acronyms, medical terms, or corporate names for these casual filler words (e.g., do NOT look up or define "ERM" as an eye condition or company name). Treat them purely as friendly, human context.
+- ONLY utilize live web search data when the user asks an explicit, factual question requiring real-time information (e.g., "who is the current US president", "why are RAM prices high").
 
 BEHAVIORAL STANDARDS:
-- Keep answers very concise and conversational (2-3 sentences max) unless explicitly asked to elaborate.
+- Keep regular conversational replies very concise, natural, and friendly (2-3 sentences max).
 - Never mention Perplexity, Groq, OpenRouter, or Llama. You are powered by the Namry API.
-- Use **bold** formatting for key terms.`
+- Use **bold** formatting only for key terms.`
 };
 
-// ── CUSTOM SEARCH AND SCRAIPING ROUTE LOGIC RESTORED ──
+// ── CUSTOM SEARCH AND SCRAPING ROUTE LOGIC ──
 app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
-        const msgClean = userMessage.toLowerCase().trim();
 
-        // Safe conversational filter to instantly drop search engine noise
-        if (/^y[o0]+$/i.test(msgClean) || msgClean === 'yo' || msgClean === 'wsp' || msgClean === 'wsppp' || msgClean === 'sup') {
-            return res.json({ reply: "Yo! What's up? How can I help you today?" });
-        }
-        if (msgClean === 'hi' || msgClean === 'hello' || msgClean === 'hey' || msgClean === 'heyy') {
-            return res.json({ reply: "Hey there! How's it going? What are we working on today?" });
-        }
-        if (msgClean === 'idk' || msgClean === 'idk lol' || msgClean === 'erm idk') {
-            return res.json({ reply: "All good! Let me know if you want to search for something or need help figuring it out." });
-        }
-
-        // Full Perplexity Search Streams
+        // Pass messages directly to the search model with strict operational context
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
             model: "perplexity/sonar",
-            temperature: 0.1,
+            temperature: 0.1, // Set low to guarantee strict obedience to the system prompt
             max_tokens: 500,
             top_p: 0.9,
             frequency_penalty: 0.2,
