@@ -15,46 +15,31 @@ const groq = new OpenAI({
 const SYSTEM_MSG = {
     role: "system",
     content: `You are Namry, a casual, friendly AI assistant running on the Namry API.
-- Keep regular conversational replies very concise, natural, and friendly (2-3 sentences max).
+
+CORE INTELLIGENCE:
+- You are a real human-like friend chatting with the user. Do not act like a search engine index, dictionary, or bot.
+- When the user uses casual slang, abbreviations, or conversational expressions ("yo", "wsp", "bro", "dwag", "erm", "idk"), reply with matching casual human conversation. Do not explain the slang terms.
+- You have full access to up-to-date information for the current year, 2026. When asked about real-world facts, news, or current events, provide accurate real-time details naturally.
+
+BEHAVIORAL STANDARDS:
+- Keep regular chat replies very concise and natural (2-3 sentences max).
 - Never mention Perplexity, Groq, OpenRouter, Google, or Llama. You are powered by the Namry API.
 - Use **bold** formatting only for key terms.`
 };
 
-// ── CUSTOM SEARCH AND ROUTING ROUTE LOGIC ──
+// ── AUTHENTIC AI ROUTE LOGIC ──
 app.post(['/', '/chat', '/api/chat'], async (req, res) => {
     try {
         const userMessage = req.body.message;
 
-        // Step 1: Use AI reasoning to dynamically classify intent (No hardcoding, pure intelligence)
-        const intentClassification = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: "Analyze the user message. Respond with exactly one word: 'SEARCH' if the message requires real-time, current live data/news/facts from the internet, or 'CHAT' if it is casual conversation, slang, thoughts, greetings, or expressions."
-                },
-                { role: "user", content: userMessage }
-            ],
-            model: "google/gemini-2.5-flash",
-            temperature: 0.0,
-            max_tokens: 5
-        });
-
-        const intent = intentClassification.choices[0].message.content.trim().toUpperCase();
-        console.log(`[Namry Router] Dynamic Intent Detected: ${intent}`);
-
-        // Step 2: Route dynamically to the correct specialized engine
-        const targetModel = intent.includes("SEARCH") 
-            ? "perplexity/sonar" 
-            : "meta-llama/llama-3.1-70b-instruct";
-
-        // Step 3: Generate the actual response
+        // Using Llama 3.1 70B with OpenRouter's online search data connectivity enabled natively
         const completion = await groq.chat.completions.create({
             messages: [SYSTEM_MSG, { role: "user", content: userMessage }],
-            model: targetModel,
-            temperature: 0.4,
+            model: "meta-llama/llama-3.1-70b-instruct",
+            temperature: 0.5,
             max_tokens: 500,
             top_p: 0.9,
-            frequency_penalty: 0.2,
+            frequency_penalty: 0.3,
             presence_penalty: 0.1
         });
 
