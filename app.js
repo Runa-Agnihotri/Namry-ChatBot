@@ -83,16 +83,20 @@ function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
-    // Toggle state for mobile
-    isSidebarActive = !isSidebarActive;
-    sidebar.classList.toggle('active', isSidebarActive);
-    if (overlay) overlay.classList.toggle('active', isSidebarActive);
-    
-    // Toggle state for desktop
-    sidebarOpen = !sidebarOpen;
-    sidebar.classList.toggle('collapsed', !sidebarOpen);
-}
+   function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isMobile = window.innerWidth <= 768;
 
+    if (isMobile) {
+        isSidebarActive = !isSidebarActive;
+        sidebar.classList.toggle('active', isSidebarActive);
+        if (overlay) overlay.classList.toggle('active', isSidebarActive);
+    } else {
+        sidebarOpen = !sidebarOpen;
+        sidebar.classList.toggle('collapsed', !sidebarOpen);
+    }
+}
 // ── NEW CONVERSATION BUTTON FIX ──
 function newChat() {
     createNewChat();
